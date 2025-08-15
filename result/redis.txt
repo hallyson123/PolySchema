@@ -1,0 +1,31 @@
+SCHEMA MIMIC IV Redis {
+	ENTITY patient {
+		KEY_VALUE {
+			subject_id: NUMBER { REQUIRED }
+			gender: STRING { OPTIONAL }
+			anchor_age: NUMBER { OPTIONAL }
+			dod: DATE { OPTIONAL }
+		}
+	}
+	ENTITY prescription {
+		KEY_VALUE {
+			pharmacy_id: NUMBER { REQUIRED }
+			subject_id: NUMBER { REQUIRED }
+			hadm_id: NUMBER { REQUIRED }
+			starttime: DATE { OPTIONAL }
+			stoptime: DATE { OPTIONAL }
+			drug_type: STRING { REQUIRED }
+			drug: STRING { REQUIRED }
+			gsn: STRING { OPTIONAL }
+			ndc: STRING { OPTIONAL }
+			prod_strength: STRING { OPTIONAL }
+			form_rx: STRING { OPTIONAL }
+			dose_val_rx: STRING { OPTIONAL }
+			dose_unit_rx: STRING { OPTIONAL }
+			form_val_disp: STRING { OPTIONAL }
+			form_unit_disp: STRING { OPTIONAL }
+			doses_per_24_hrs: NUMBER { OPTIONAL }
+			route: STRING { REQUIRED }
+		}
+	}
+}

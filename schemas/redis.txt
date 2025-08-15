@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org",
+  "title": "MIMIC IV Redis",
+  "description": "patient and prescription",
+  "type": "object",
+  "properties": {
+    "patient": {
+      "type": "object",
+      "properties": {
+        "subject_id": { "type": "integer" },
+        "gender": { "type": "string" },
+        "anchor_age": { "type": "integer" },
+        "dod": { "type": "date-time" }
+      },
+      "required": ["subject_id"]
+    },
+    "prescription": {
+      "type": "object",
+      "properties": {
+        "pharmacy_id": { "type": "integer" },
+        "subject_id": { "type": "integer" },
+        "hadm_id": { "type": "integer" },
+	"starttime": { "type": "date-time" },
+	"stoptime": { "type": "date-time" },
+        "drug_type": { "type": "string" },
+        "drug": { "type": "string" },
+	"gsn": { "type": "string" },
+        "ndc": { "type": "string" },
+        "prod_strength": { "type": "string" },
+        "form_rx": { "type": "string" },
+        "dose_val_rx": { "type": "string" },
+        "dose_unit_rx": { "type": "string" },
+	"form_val_disp": { "type": "string" },
+        "form_unit_disp": { "type": "string" },
+        "doses_per_24_hrs": { "type": "integer" },
+        "route": { "type": "string" }
+      },
+      "required": ["pharmacy_id", "subject_id", "hadm_id", "drug_type", "drug", "route"]
+    }
+  }
+}

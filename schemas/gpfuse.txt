@@ -1,0 +1,41 @@
+CREATE GRAPH TYPE TesteGraph STRICT {
+    (patientType: patient {
+        subject_id INT,
+        OPTIONAL gender STR,
+        OPTIONAL anchor_age INT,
+	    OPTIONAL anchor_year INT,
+	    OPTIONAL anchor_year_group STR,
+	    OPTIONAL dod DATE,
+    }),
+
+    (poeType: poe {
+        poe_id STR,
+	    poe_seq INT,
+	    subject_id INT,
+	    hadm_id INT,
+        ordertime DATE,
+	    OPTIONAL order_type STR,
+	    OPTIONAL order_subtype STR,
+        OPTIONAL transaction_type STR,
+        OPTIONAL discontinue_of_poe_id STR, 
+        OPTIONAL discontinued_by_poe_id STR,
+        OPTIONAL order_provider_id STR,
+        OPTIONAL order_status STR
+    }),
+
+    (poe_detailType: poe_detail {
+        poe_id STR,
+	    poe_seq INT,
+	    subject_id INT,
+        field_name STR,
+        OPTIONAL field_value STR
+    }),
+
+    (:patientType)-[INITIATES_ORDERType: INITIATES_ORDER (1:1); (0:N)]->(:poeType),
+    (:poeType)-[IS_DETAILED_BYType: IS_DETAILED_BY (1:1); (1:N)]->(:poe_detailType),
+    (:poeType)-[DISCONTINUESType: DISCONTINUES (0:1); (0:1)]->(:poeType),
+
+    FOR (x: patientType) EXCLUSIVE MANDATORY SINGLETON x.subject_id,
+    FOR (x: poeType) EXCLUSIVE MANDATORY SINGLETON x.poe_id,
+    FOR (x: poe_detailType) EXCLUSIVE MANDATORY SINGLETON x.(poe_id, field_name)
+}

@@ -1,0 +1,354 @@
+SCHEMA UnifiedPolySchema {
+	ENTITY patient {
+		GRAPH {
+			subject_id: NUMBER { REQUIRED }
+			gender: STRING { OPTIONAL }
+			anchor_age: NUMBER { OPTIONAL }
+			anchor_year: NUMBER { OPTIONAL }
+			anchor_year_group: STRING { OPTIONAL }
+			dod: DATE { OPTIONAL }
+		}
+	}
+	ENTITY poe {
+		GRAPH {
+			poe_id: STRING { REQUIRED }
+			poe_seq: NUMBER { REQUIRED }
+			subject_id: NUMBER { REQUIRED }
+			hadm_id: NUMBER { REQUIRED }
+			ordertime: DATE { REQUIRED }
+			order_type: STRING { OPTIONAL }
+			order_subtype: STRING { OPTIONAL }
+			transaction_type: STRING { OPTIONAL }
+			discontinue_of_poe_id: STRING { OPTIONAL }
+			discontinued_by_poe_id: STRING { OPTIONAL }
+			order_provider_id: STRING { OPTIONAL }
+			order_status: STRING { OPTIONAL }
+		}
+	}
+	ENTITY poe_detail {
+		GRAPH {
+			poe_id: STRING { REQUIRED }
+			poe_seq: NUMBER { REQUIRED }
+			subject_id: NUMBER { REQUIRED }
+			field_name: STRING { REQUIRED }
+			field_value: STRING { OPTIONAL }
+		}
+	}
+	RELATION INITIATES_ORDER FROM patient TO poe (0:N) ; (1:1)
+	RELATION IS_DETAILED_BY FROM poe TO poe_detail (1:N) ; (1:1)
+	RELATION DISCONTINUES FROM poe TO poe (0:1) ; (0:1)
+	CONSTRAINT patientKey ON patient.subject_id IS KEY
+	CONSTRAINT poeKey ON poe.poe_id IS KEY
+	CONSTRAINT poe_detailKey ON poe_detail.(poe_id, field_name) IS KEY
+
+	ENTITY pharmacy {
+		DOCUMENT {
+			pharmacy_id: NUMBER { REQUIRED, KEY }
+			subject_id: NUMBER
+			hadm_id: NUMBER
+			poe_id: STRING
+			starttime: DATE
+			stoptime: DATE
+			medication: STRING
+			proc_type: ENUM ["IV Piggyback"]
+			status: ENUM ["Dispensed", "In-Progress"]
+			entertime: DATE
+			verifiedtime: DATE
+			route: ENUM ["IV", "PO"]
+			frequency: STRING
+			disp_sched: STRING
+			infusion_type: STRING
+			sliding_scale: ENUM ["N", "Y"]
+			lockout_interval: NULL
+			basal_rate: NUMBER
+			one_hr_max: NULL
+			doses_per_24_hrs: NUMBER
+			duration: NUMBER
+			duration_interval: ENUM ["Hours", "Days"]
+			expiration_value: NUMBER
+			expiration_unit: ENUM ["Hours", "Days"]
+			expirationdate: DATE
+			dispensation: ENUM ["Main Pharmacy"]
+			fill_quantity: STRING
+			administration_details: ARRAY [
+				OBJECT {
+				subject_id: NUMBER
+				emar_id: STRING { REQUIRED, KEY }
+				emar_seq: NUMBER
+				parent_field_ordinal: NUMBER
+				administration_type: STRING
+				pharmacy_id: NUMBER
+				barcode_type: ENUM ["OUT"]
+				reason_for_no_barcode: NULL
+				complete_dose_not_given: ENUM ["N", "Y"]
+				dose_due: STRING
+				dose_due_unit: STRING
+				dose_given: STRING
+				dose_given_unit: STRING
+				will_remainder_of_dose_be_given: ENUM ["N", "Y"]
+				product_amount_given: STRING
+				product_unit: STRING
+				product_code: STRING
+				product_description: STRING
+				product_description_other: NULL
+				prior_infusion_rate: NULL
+				infusion_rate: STRING
+				infusion_rate_adjustment: STRING
+				infusion_rate_adjustment_amount: NULL
+				infusion_rate_unit: STRING
+				route: ENUM ["IV", "PO"]
+				infusion_complete: ENUM ["Y", "N"]
+				completion_interval: STRING
+				new_iv_bag_hung: ENUM ["Y", "N"]
+				continued_infusion_in_other_location: ENUM ["N", "Y"]
+				restart_interval: NULL
+				side: ENUM ["Esquerdo", "Direito"]
+				site: STRING
+				non_formulary_visual_verification: ENUM ["Y", "N"]
+				}
+			]
+		}
+	}
+	ENTITY emar {
+		DOCUMENT {
+			emar_id: STRING { REQUIRED, KEY }
+			emar_seq: NUMBER
+			subject_id: NUMBER
+			hadm_id: NUMBER
+			poe_id: STRING
+			pharmacy_id: NUMBER
+			charttime: DATE
+			medication: STRING
+			event_txt: ENUM ["Administered", "Held"]
+			scheduletime: DATE
+			storetime: DATE
+		}
+	}
+	CONSTRAINT pharmacyKey ON pharmacy.pharmacy_id IS KEY
+	CONSTRAINT emarKey ON emar.emar_id IS KEY
+
+	ENTITY patient {
+		KEY_VALUE {
+			subject_id: NUMBER { REQUIRED }
+			gender: STRING { OPTIONAL }
+			anchor_age: NUMBER { OPTIONAL }
+			dod: DATE { OPTIONAL }
+		}
+	}
+	ENTITY prescription {
+		KEY_VALUE {
+			pharmacy_id: NUMBER { REQUIRED }
+			subject_id: NUMBER { REQUIRED }
+			hadm_id: NUMBER { REQUIRED }
+			starttime: DATE { OPTIONAL }
+			stoptime: DATE { OPTIONAL }
+			drug_type: STRING { REQUIRED }
+			drug: STRING { REQUIRED }
+			gsn: STRING { OPTIONAL }
+			ndc: STRING { OPTIONAL }
+			prod_strength: STRING { OPTIONAL }
+			form_rx: STRING { OPTIONAL }
+			dose_val_rx: STRING { OPTIONAL }
+			dose_unit_rx: STRING { OPTIONAL }
+			form_val_disp: STRING { OPTIONAL }
+			form_unit_disp: STRING { OPTIONAL }
+			doses_per_24_hrs: NUMBER { OPTIONAL }
+			route: STRING { REQUIRED }
+		}
+	}
+
+	ENTITY patients {
+		RELATIONAL {
+			subject_id: NUMBER { REQUIRED, KEY }
+			gender: STRING { REQUIRED }
+			anchor_age: NUMBER { REQUIRED }
+			anchor_year: NUMBER { REQUIRED }
+			anchor_year_group: STRING { REQUIRED }
+			dod: DATE { OPTIONAL }
+		}
+	}
+	ENTITY admissions {
+		RELATIONAL {
+			hadm_id: NUMBER { REQUIRED, KEY }
+			subject_id: NUMBER { REQUIRED }
+			admittime: DATE { REQUIRED }
+			dischtime: DATE { REQUIRED }
+			deathtime: DATE { OPTIONAL }
+			admission_type: STRING { REQUIRED }
+			admission_location: STRING { OPTIONAL }
+			discharge_location: STRING { OPTIONAL }
+			insurance: STRING { OPTIONAL }
+			language: STRING { OPTIONAL }
+			marital_status: STRING { OPTIONAL }
+			ethnicity: STRING { OPTIONAL }
+			edregtime: DATE { OPTIONAL }
+			edouttime: DATE { OPTIONAL }
+			hospital_expire_flag: NUMBER { REQUIRED }
+		}
+	}
+	ENTITY d_icd_procedures {
+		RELATIONAL {
+			icd_code: STRING { REQUIRED, KEY }
+			icd_version: NUMBER { REQUIRED, KEY }
+			long_title: STRING { REQUIRED }
+		}
+	}
+	ENTITY procedures_icd {
+		RELATIONAL {
+			subject_id: NUMBER { REQUIRED, KEY }
+			hadm_id: NUMBER { REQUIRED, KEY }
+			seq_num: NUMBER { REQUIRED, KEY }
+			chartdate: DATE { REQUIRED }
+			icd_code: STRING { REQUIRED }
+			icd_version: NUMBER { REQUIRED }
+		}
+	}
+	ENTITY poe {
+		RELATIONAL {
+			poe_id: STRING { REQUIRED, KEY }
+			poe_seq: NUMBER { REQUIRED }
+			subject_id: NUMBER { REQUIRED }
+			hadm_id: NUMBER { REQUIRED }
+			ordertime: DATE { REQUIRED }
+			order_type: STRING { REQUIRED }
+			order_subtype: STRING { OPTIONAL }
+			transaction_type: STRING { REQUIRED }
+			discontinue_of_poe_id: STRING { OPTIONAL }
+			discontinued_by_poe_id: STRING { OPTIONAL }
+			order_provider_id: STRING { OPTIONAL }
+			order_status: STRING { OPTIONAL }
+		}
+	}
+	ENTITY poe_detail {
+		RELATIONAL {
+			poe_id: STRING { REQUIRED, KEY }
+			poe_seq: NUMBER { REQUIRED, KEY }
+			subject_id: NUMBER { REQUIRED }
+			field_name: STRING { REQUIRED, KEY }
+			field_value: STRING { OPTIONAL }
+		}
+	}
+	ENTITY pharmacy {
+		RELATIONAL {
+			pharmacy_id: NUMBER { REQUIRED, KEY }
+			subject_id: NUMBER { REQUIRED }
+			hadm_id: NUMBER { REQUIRED }
+			poe_id: STRING { OPTIONAL }
+			starttime: DATE { OPTIONAL }
+			stoptime: DATE { OPTIONAL }
+			medication: STRING { OPTIONAL }
+			proc_type: STRING { REQUIRED }
+			status: STRING { OPTIONAL }
+			entertime: DATE { REQUIRED }
+			verifiedtime: DATE { OPTIONAL }
+			route: STRING { OPTIONAL }
+			frequency: STRING { OPTIONAL }
+			disp_sched: STRING { OPTIONAL }
+			infusion_type: STRING { OPTIONAL }
+			sliding_scale: STRING { OPTIONAL }
+			lockout_interval: STRING { OPTIONAL }
+			basal_rate: NUMBER { OPTIONAL }
+			one_hr_max: NUMBER { OPTIONAL }
+			doses_per_24_hrs: NUMBER { OPTIONAL }
+			duration: NUMBER { OPTIONAL }
+			duration_interval: STRING { OPTIONAL }
+			expiration_value: NUMBER { OPTIONAL }
+			expiration_unit: STRING { OPTIONAL }
+			expirationdate: DATE { OPTIONAL }
+			dispensation: STRING { OPTIONAL }
+			fill_quantity: STRING { OPTIONAL }
+		}
+	}
+	ENTITY prescriptions {
+		RELATIONAL {
+			subject_id: NUMBER { REQUIRED }
+			hadm_id: NUMBER { REQUIRED, KEY }
+			pharmacy_id: NUMBER { REQUIRED, KEY }
+			starttime: DATE { OPTIONAL }
+			stoptime: DATE { OPTIONAL }
+			drug_type: STRING { REQUIRED, KEY }
+			drug: STRING { REQUIRED, KEY }
+			gsn: STRING { OPTIONAL }
+			ndc: STRING { OPTIONAL }
+			prod_strength: STRING { OPTIONAL }
+			form_rx: STRING { OPTIONAL }
+			dose_val_rx: STRING { OPTIONAL }
+			dose_unit_rx: STRING { OPTIONAL }
+			form_val_disp: STRING { OPTIONAL }
+			form_unit_disp: STRING { OPTIONAL }
+			doses_per_24_hrs: NUMBER { OPTIONAL }
+			route: STRING { OPTIONAL }
+		}
+	}
+	ENTITY emar {
+		RELATIONAL {
+			emar_id: STRING { REQUIRED, KEY }
+			subject_id: NUMBER { REQUIRED }
+			hadm_id: NUMBER { OPTIONAL }
+			poe_id: STRING { REQUIRED }
+			pharmacy_id: NUMBER { OPTIONAL }
+			charttime: DATE { REQUIRED }
+			scheduletime: DATE { OPTIONAL }
+			event_txt: STRING { OPTIONAL }
+		}
+	}
+	ENTITY emar_detail {
+		RELATIONAL {
+			emar_id: STRING { REQUIRED, KEY }
+			emar_seq: NUMBER { REQUIRED, KEY }
+			parent_field_ordinal: NUMBER { OPTIONAL }
+			administration_type: STRING { OPTIONAL }
+			pharmacy_id: NUMBER { OPTIONAL }
+			barcode_type: STRING { OPTIONAL }
+			reason_for_no_barcode: STRING { OPTIONAL }
+			complete_dose_not_given: STRING { OPTIONAL }
+			dose_due: STRING { OPTIONAL }
+			dose_due_unit: STRING { OPTIONAL }
+			dose_given: STRING { OPTIONAL }
+			dose_given_unit: STRING { OPTIONAL }
+			will_remainder_of_dose_be_given: STRING { OPTIONAL }
+			product_amount_given: STRING { OPTIONAL }
+			product_unit: STRING { OPTIONAL }
+			product_code: STRING { OPTIONAL }
+			product_description: STRING { OPTIONAL }
+			product_description_other: STRING { OPTIONAL }
+			prior_infusion_rate: NUMBER { OPTIONAL }
+			infusion_rate: NUMBER { OPTIONAL }
+			infusion_rate_adjustment: STRING { OPTIONAL }
+			infusion_rate_adjustment_amount: STRING { OPTIONAL }
+			infusion_rate_unit: STRING { OPTIONAL }
+			route: STRING { OPTIONAL }
+			infusion_complete: STRING { OPTIONAL }
+			completion_interval: STRING { OPTIONAL }
+			new_iv_bag_hung: STRING { OPTIONAL }
+			continued_infusion_in_other_location: STRING { OPTIONAL }
+			restart_interval: STRING { OPTIONAL }
+			side: STRING { OPTIONAL }
+			site: STRING { OPTIONAL }
+			non_formulary_visual_verification: STRING { OPTIONAL }
+		}
+	}
+	RELATION fk_admissions_patients FROM admissions TO patients
+	RELATION fk_procedures_admissions FROM procedures_icd TO admissions
+	RELATION fk_procedures_d_icd FROM procedures_icd TO d_icd_procedures
+	RELATION fk_poe_admissions FROM poe TO admissions
+	RELATION fk_poe_detail_poe FROM poe_detail TO poe
+	RELATION fk_pharmacy_admissions FROM pharmacy TO admissions
+	RELATION fk_pharmacy_poe FROM pharmacy TO poe
+	RELATION fk_prescriptions_admissions FROM prescriptions TO admissions
+	RELATION fk_prescriptions_pharmacy FROM prescriptions TO pharmacy
+	RELATION fk_emar_admissions FROM emar TO admissions
+	RELATION fk_emar_poe FROM emar TO poe
+	RELATION fk_emar_pharmacy FROM emar TO pharmacy
+	RELATION fk_emar_detail_emar FROM emar_detail TO emar
+	CONSTRAINT patientsKey ON patients.subject_id IS KEY
+	CONSTRAINT admissionsKey ON admissions.hadm_id IS KEY
+	CONSTRAINT pk_d_icd_procedures ON d_icd_procedures.(icd_version, icd_code) IS KEY
+	CONSTRAINT pk_procedures_icd ON procedures_icd.(seq_num, subject_id, hadm_id) IS KEY
+	CONSTRAINT poeKey ON poe.poe_id IS KEY
+	CONSTRAINT pk_poe_detail ON poe_detail.(poe_id, field_name, poe_seq) IS KEY
+	CONSTRAINT pharmacyKey ON pharmacy.pharmacy_id IS KEY
+	CONSTRAINT pk_prescriptions ON prescriptions.(drug, pharmacy_id, hadm_id, drug_type) IS KEY
+	CONSTRAINT emarKey ON emar.emar_id IS KEY
+	CONSTRAINT pk_emar_detail ON emar_detail.(emar_seq, emar_id) IS KEY
+}

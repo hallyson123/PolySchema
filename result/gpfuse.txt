@@ -1,0 +1,43 @@
+SCHEMA TesteGraph {
+	ENTITY patient {
+		GRAPH {
+			subject_id: NUMBER { REQUIRED }
+			gender: STRING { OPTIONAL }
+			anchor_age: NUMBER { OPTIONAL }
+			anchor_year: NUMBER { OPTIONAL }
+			anchor_year_group: STRING { OPTIONAL }
+			dod: DATE { OPTIONAL }
+		}
+	}
+	ENTITY poe {
+		GRAPH {
+			poe_id: STRING { REQUIRED }
+			poe_seq: NUMBER { REQUIRED }
+			subject_id: NUMBER { REQUIRED }
+			hadm_id: NUMBER { REQUIRED }
+			ordertime: DATE { REQUIRED }
+			order_type: STRING { OPTIONAL }
+			order_subtype: STRING { OPTIONAL }
+			transaction_type: STRING { OPTIONAL }
+			discontinue_of_poe_id: STRING { OPTIONAL }
+			discontinued_by_poe_id: STRING { OPTIONAL }
+			order_provider_id: STRING { OPTIONAL }
+			order_status: STRING { OPTIONAL }
+		}
+	}
+	ENTITY poe_detail {
+		GRAPH {
+			poe_id: STRING { REQUIRED }
+			poe_seq: NUMBER { REQUIRED }
+			subject_id: NUMBER { REQUIRED }
+			field_name: STRING { REQUIRED }
+			field_value: STRING { OPTIONAL }
+		}
+	}
+	RELATION INITIATES_ORDER FROM patient TO poe (0:N) ; (1:1)
+	RELATION IS_DETAILED_BY FROM poe TO poe_detail (1:N) ; (1:1)
+	RELATION DISCONTINUES FROM poe TO poe (0:1) ; (0:1)
+	CONSTRAINT patientKey ON patient.subject_id IS KEY
+	CONSTRAINT poeKey ON poe.poe_id IS KEY
+	CONSTRAINT poe_detailKey ON poe_detail.(poe_id, field_name) IS KEY
+}

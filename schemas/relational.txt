@@ -1,0 +1,178 @@
+CREATE TABLE patients (
+    subject_id INT NOT NULL PRIMARY KEY,
+    gender VARCHAR(1) NOT NULL,
+    anchor_age INT NOT NULL,
+    anchor_year INT NOT NULL,
+    anchor_year_group VARCHAR(20) NOT NULL,
+    dod TIMESTAMP(0)
+);
+
+CREATE TABLE admissions (
+    hadm_id INT NOT NULL PRIMARY KEY,
+    subject_id INT NOT NULL,
+    admittime TIMESTAMP(3) NOT NULL,
+    dischtime TIMESTAMP(3) NOT NULL,
+    deathtime TIMESTAMP(3),
+    admission_type VARCHAR(50) NOT NULL,
+    admission_location VARCHAR(50),
+    discharge_location VARCHAR(50),
+    insurance VARCHAR(255),
+    language VARCHAR(10),
+    marital_status VARCHAR(50),
+    ethnicity VARCHAR(80),
+    edregtime TIMESTAMP(3),
+    edouttime TIMESTAMP(3),
+    hospital_expire_flag SMALLINT NOT NULL DEFAULT 0,
+    CONSTRAINT fk_admissions_patients FOREIGN KEY(subject_id) REFERENCES patients(subject_id)
+);
+
+CREATE TABLE d_icd_procedures (
+    icd_code VARCHAR(10) NOT NULL,
+    icd_version SMALLINT NOT NULL,
+    long_title TEXT NOT NULL,
+    CONSTRAINT pk_d_icd_procedures PRIMARY KEY (icd_code, icd_version)
+);
+
+CREATE TABLE procedures_icd (
+    subject_id INT NOT NULL,
+    hadm_id INT NOT NULL,
+    seq_num INT NOT NULL,
+    chartdate DATE NOT NULL,
+    icd_code VARCHAR(10) NOT NULL,
+    icd_version SMALLINT NOT NULL,
+    CONSTRAINT pk_procedures_icd PRIMARY KEY (subject_id, hadm_id, seq_num),
+    CONSTRAINT fk_procedures_admissions FOREIGN KEY(hadm_id) REFERENCES admissions(hadm_id),
+    CONSTRAINT fk_procedures_d_icd FOREIGN KEY(icd_code, icd_version) REFERENCES d_icd_procedures(icd_code, icd_version)
+);
+
+CREATE TABLE poe (
+    poe_id VARCHAR(25) NOT NULL PRIMARY KEY,
+    poe_seq INT NOT NULL,
+    subject_id INT NOT NULL,
+    hadm_id INT NOT NULL,
+    ordertime TIMESTAMP(3) NOT NULL,
+    order_type VARCHAR(25) NOT NULL,
+    order_subtype VARCHAR(50),
+    transaction_type VARCHAR(15) NOT NULL,
+    discontinue_of_poe_id VARCHAR(25),
+    discontinued_by_poe_id VARCHAR(25),
+    order_provider_id VARCHAR(15),
+    order_status VARCHAR(15),
+    CONSTRAINT fk_poe_admissions FOREIGN KEY(hadm_id) REFERENCES admissions(hadm_id)
+);
+
+CREATE TABLE poe_detail (
+    poe_id VARCHAR(25) NOT NULL,
+    poe_seq INT NOT NULL,
+    subject_id INT NOT NULL,
+    field_name VARCHAR(255) NOT NULL,
+    field_value TEXT,
+    CONSTRAINT pk_poe_detail PRIMARY KEY (poe_id, poe_seq, field_name),
+    CONSTRAINT fk_poe_detail_poe FOREIGN KEY(poe_id) REFERENCES poe(poe_id)
+);
+
+CREATE TABLE pharmacy (
+    pharmacy_id INT NOT NULL PRIMARY KEY,
+    subject_id INT NOT NULL,
+    hadm_id INT NOT NULL,
+    poe_id VARCHAR(25),
+    starttime TIMESTAMP(3),
+    stoptime TIMESTAMP(3),
+    medication TEXT,
+    proc_type VARCHAR(50) NOT NULL,
+    status VARCHAR(50),
+    entertime TIMESTAMP(3) NOT NULL,
+    verifiedtime TIMESTAMP(3),
+    route VARCHAR(50),
+    frequency VARCHAR(50),
+    disp_sched TEXT,
+    infusion_type VARCHAR(15),
+    sliding_scale VARCHAR(5),
+    lockout_interval VARCHAR(50),
+    basal_rate REAL,
+    one_hr_max REAL,
+    doses_per_24_hrs REAL,
+    duration REAL,
+    duration_interval VARCHAR(20),
+    expiration_value INT,
+    expiration_unit VARCHAR(50),
+    expirationdate TIMESTAMP(3),
+    dispensation VARCHAR(100),
+    fill_quantity VARCHAR(50),
+    CONSTRAINT fk_pharmacy_admissions FOREIGN KEY(hadm_id) REFERENCES admissions(hadm_id),
+    CONSTRAINT fk_pharmacy_poe FOREIGN KEY(poe_id) REFERENCES poe(poe_id)
+);
+
+CREATE TABLE prescriptions (
+    subject_id INT NOT NULL,
+    hadm_id INT NOT NULL,
+    pharmacy_id INT NOT NULL,
+    starttime TIMESTAMP(3),
+    stoptime TIMESTAMP(3),
+    drug_type VARCHAR(20) NOT NULL,
+    drug VARCHAR(255) NOT NULL,
+    gsn VARCHAR(255),
+    ndc VARCHAR(25),
+    prod_strength VARCHAR(255),
+    form_rx VARCHAR(255),
+    dose_val_rx VARCHAR(100),
+    dose_unit_rx VARCHAR(50),
+    form_val_disp VARCHAR(100),
+    form_unit_disp VARCHAR(50),
+    doses_per_24_hrs REAL,
+    route VARCHAR(50),
+    CONSTRAINT pk_prescriptions PRIMARY KEY (hadm_id, pharmacy_id, drug_type, drug),
+    CONSTRAINT fk_prescriptions_admissions FOREIGN KEY(hadm_id) REFERENCES admissions(hadm_id),
+    CONSTRAINT fk_prescriptions_pharmacy FOREIGN KEY(pharmacy_id) REFERENCES pharmacy(pharmacy_id)
+);
+
+CREATE TABLE emar (
+    emar_id VARCHAR(25) NOT NULL PRIMARY KEY,
+    subject_id INT NOT NULL,
+    hadm_id INT,
+    poe_id VARCHAR(25) NOT NULL,
+    pharmacy_id INT,
+    charttime TIMESTAMP(3) NOT NULL,
+    scheduletime TIMESTAMP(3),
+    event_txt VARCHAR(100),
+    CONSTRAINT fk_emar_admissions FOREIGN KEY(hadm_id) REFERENCES admissions(hadm_id),
+    CONSTRAINT fk_emar_poe FOREIGN KEY(poe_id) REFERENCES poe(poe_id),
+    CONSTRAINT fk_emar_pharmacy FOREIGN KEY(pharmacy_id) REFERENCES pharmacy(pharmacy_id)
+);
+
+CREATE TABLE emar_detail (
+    emar_id VARCHAR(25) NOT NULL,
+    emar_seq INT NOT NULL,
+    parent_field_ordinal REAL,
+    administration_type VARCHAR(50),
+    pharmacy_id INT,
+    barcode_type VARCHAR(10),
+    reason_for_no_barcode TEXT,
+    complete_dose_not_given VARCHAR(5),
+    dose_due VARCHAR(100),
+    dose_due_unit VARCHAR(50),
+    dose_given VARCHAR(255),
+    dose_given_unit VARCHAR(50),
+    will_remainder_of_dose_be_given VARCHAR(5),
+    product_amount_given VARCHAR(50),
+    product_unit VARCHAR(50),
+    product_code VARCHAR(25),
+    product_description TEXT,
+    product_description_other TEXT,
+    prior_infusion_rate REAL,
+    infusion_rate REAL,
+    infusion_rate_adjustment VARCHAR(50),
+    infusion_rate_adjustment_amount VARCHAR(50),
+    infusion_rate_unit VARCHAR(50),
+    route VARCHAR(50),
+    infusion_complete VARCHAR(5),
+    completion_interval VARCHAR(50),
+    new_iv_bag_hung VARCHAR(5),
+    continued_infusion_in_other_location VARCHAR(5),
+    restart_interval VARCHAR(50),
+    side VARCHAR(50),
+    site TEXT,
+    non_formulary_visual_verification VARCHAR(5),
+    CONSTRAINT pk_emar_detail PRIMARY KEY (emar_id, emar_seq),
+    CONSTRAINT fk_emar_detail_emar FOREIGN KEY(emar_id) REFERENCES emar(emar_id)
+);

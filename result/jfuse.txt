@@ -1,0 +1,87 @@
+SCHEMA JFuseSchema {
+	ENTITY pharmacy {
+		DOCUMENT {
+			pharmacy_id: NUMBER { REQUIRED, KEY }
+			subject_id: NUMBER
+			hadm_id: NUMBER
+			poe_id: STRING
+			starttime: DATE
+			stoptime: DATE
+			medication: STRING
+			proc_type: ENUM ["IV Piggyback"]
+			status: ENUM ["Dispensed", "In-Progress"]
+			entertime: DATE
+			verifiedtime: DATE
+			route: ENUM ["IV", "PO"]
+			frequency: STRING
+			disp_sched: STRING
+			infusion_type: STRING
+			sliding_scale: ENUM ["N", "Y"]
+			lockout_interval: NULL
+			basal_rate: NUMBER
+			one_hr_max: NULL
+			doses_per_24_hrs: NUMBER
+			duration: NUMBER
+			duration_interval: ENUM ["Hours", "Days"]
+			expiration_value: NUMBER
+			expiration_unit: ENUM ["Hours", "Days"]
+			expirationdate: DATE
+			dispensation: ENUM ["Main Pharmacy"]
+			fill_quantity: STRING
+			administration_details: ARRAY [
+				OBJECT {
+				subject_id: NUMBER
+				emar_id: STRING { REQUIRED, KEY }
+				emar_seq: NUMBER
+				parent_field_ordinal: NUMBER
+				administration_type: STRING
+				pharmacy_id: NUMBER
+				barcode_type: ENUM ["OUT"]
+				reason_for_no_barcode: NULL
+				complete_dose_not_given: ENUM ["N", "Y"]
+				dose_due: STRING
+				dose_due_unit: STRING
+				dose_given: STRING
+				dose_given_unit: STRING
+				will_remainder_of_dose_be_given: ENUM ["N", "Y"]
+				product_amount_given: STRING
+				product_unit: STRING
+				product_code: STRING
+				product_description: STRING
+				product_description_other: NULL
+				prior_infusion_rate: NULL
+				infusion_rate: STRING
+				infusion_rate_adjustment: STRING
+				infusion_rate_adjustment_amount: NULL
+				infusion_rate_unit: STRING
+				route: ENUM ["IV", "PO"]
+				infusion_complete: ENUM ["Y", "N"]
+				completion_interval: STRING
+				new_iv_bag_hung: ENUM ["Y", "N"]
+				continued_infusion_in_other_location: ENUM ["N", "Y"]
+				restart_interval: NULL
+				side: ENUM ["Esquerdo", "Direito"]
+				site: STRING
+				non_formulary_visual_verification: ENUM ["Y", "N"]
+				}
+			]
+		}
+	}
+	ENTITY emar {
+		DOCUMENT {
+			emar_id: STRING { REQUIRED, KEY }
+			emar_seq: NUMBER
+			subject_id: NUMBER
+			hadm_id: NUMBER
+			poe_id: STRING
+			pharmacy_id: NUMBER
+			charttime: DATE
+			medication: STRING
+			event_txt: ENUM ["Administered", "Held"]
+			scheduletime: DATE
+			storetime: DATE
+		}
+	}
+	CONSTRAINT pharmacyKey ON pharmacy.pharmacy_id IS KEY
+	CONSTRAINT emarKey ON emar.emar_id IS KEY
+}
